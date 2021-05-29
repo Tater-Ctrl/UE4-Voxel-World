@@ -112,6 +112,7 @@ void AProcMapCharacter::LookUpAtRate(float Rate)
 
 void AProcMapCharacter::MoveForward(float Value)
 {
+	VerticalVelocity = Value;
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
