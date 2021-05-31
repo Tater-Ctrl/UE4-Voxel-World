@@ -4,38 +4,43 @@
 
 #include "CoreMinimal.h"
 #include "BlockType.h"
+#include "MapVariables.h"
 
 class PROCMAP_API ACreateCube
 {
 
 private:
 	int cubeSize = 60;
-	float uvScale = 1.f / 16.f;
+	float uvScale = 1.f / TEXTURE_ATLAS_SIZE;
 	int Uvx = 1;
 	int Uvy = 1;
 
-	int top = 0;
-	int side = 0;
-	int bottom = 0;
+	unsigned int TextureTop = 0;
+	unsigned int TextureSide = 0;
+	unsigned int TextureBottom = 0;
 
-	int offset = 0;
+	void AddTriangles();
+	void AddNormals(const FVector Nor);
+	void AddUV(const int Value);
+
+	unsigned int VerticesCount;
 
 public:	
 	// Sets default values for this actor's properties
 	ACreateCube();
 
-	TArray<FVector> vertices;
-	TArray<FVector> normals;
-	TArray<int32> triangles;
-	TArray<FVector2D> uvs;
+	TArray<FVector> Vertices;
+	TArray<FVector> Normals;
+	TArray<int32> Triangles;
+	TArray<FVector2D> Uvs;
 
-	void Top(int x, int y, int z);
-	void Bottom(int , int y, int z);
-	void Left(int x, int y, int z);
-	void Right(int x, int y, int z);
-	void Front(int x, int y, int z);
-	void Back(int x, int y, int z);
+	void Top(int X, int Y, int Z);
+	void Bottom(int X, int Y, int Z);
+	void Left(int X, int Y, int Z);
+	void Right(int X, int Y, int Z);
+	void Front(int X, int Y, int Z);
+	void Back(int X, int Y, int Z);
 
-	void BlockVariations(BlockType blockType);
+	void BlockVariations(const BlockType Type);
 	void ClearMeshData();
 };

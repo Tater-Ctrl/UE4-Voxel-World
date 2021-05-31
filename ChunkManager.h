@@ -5,35 +5,36 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "CreateCube.h"
-#include "ProceduralMeshComponent.h"
+#include "Components/RuntimeMeshComponentStatic.h"
 #include "MultiArray.h"
-#include "MapVariables.h"
-#include "Chunk.generated.h"
-
+#include "ChunkManager.generated.h"
 
 UCLASS()
-class PROCMAP_API AChunk : public AActor
+class PROCMAP_API AChunkManager : public AActor
 {
 	GENERATED_BODY()
 
-private:
-	TArray<FProcMeshTangent> Tangents;
+	private:
+	TArray<FRuntimeMeshTangent> Tangents;
 	TArray<FLinearColor> VertexColors;
+
+	UPROPERTY()
+	USceneComponent* RootComp;
+	
+	UPROPERTY()
+	URuntimeMeshComponentStatic* RuntimeMeshComponent;
 	
 	int CheckNeighbourChunk(int X, int Y, int Z, int IdX, int IdY);
 
-public:	
+	public:	
 	// Sets default values for this actor's properties
-	AChunk();
+	AChunkManager();
 
-	UPROPERTY(VisibleAnywhere, Category = "MyProceduralMesh")
-	UProceduralMeshComponent* pm;
+	//UPROPERTY(VisibleAnywhere, Category = "MyProceduralMesh")
+	//UProceduralMeshComponent* pm;
 	
 	ACreateCube* Cube;
 
-	UPROPERTY(EditAnywhere, Category="Chunk ID")
-	bool IsActive;
-	
 	UPROPERTY(EditAnywhere, Category="Chunk ID")
 	FVector2D ChunkID;
 

@@ -1,48 +1,53 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Chunk.h"
+#include "ChunkManager.h"
 
 // Sets default values
-AChunk::AChunk()
+AChunkManager::AChunkManager()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-	
 	Cube = new ACreateCube();
 
 	// Colors for some reason?
 	VertexColors.Init(FLinearColor(0.0f,0.0f,0.0f,0.5), 256);
 
 	// Create new procedural mesh
-	pm = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
-	SetRootComponent(pm);
+	//pm = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
+	//SetRootComponent(pm);
+
+	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
+	SetRootComponent(RootComp);
+
+	RuntimeMeshComponent = CreateDefaultSubobject<URuntimeMeshComponentStatic>(TEXT("RuntimeMesh"));
+	RuntimeMeshComponent->SetupAttachment(RootComp);
 	
-	pm->CastShadow = true;
-	pm->bUseAsyncCooking = true;
-	
-	IsActive = true;
+	//pm->CastShadow = true;
+	//pm->bUseAsyncCooking = true;
+	//
+	//ActiveChunk = true;
 }
 
-int AChunk::CheckNeighbourChunk(int X, int Y, int Z, int IdX, int IdY)
+int AChunkManager::CheckNeighbourChunk(int X, int Y, int Z, int IdX, int IdY)
 {
 	int Value = NoiseMap->operator[](FVector2D(IdX, IdY)).Get(X, Y, Z);
 	
 	return Value;
 }
 
-void AChunk::DrawChunk() 
+void AChunkManager::DrawChunk() 
 {
-	pm->CreateMeshSection_LinearColor(0, Cube->Vertices, Cube->Triangles, Cube->Normals, Cube->Uvs, VertexColors, Tangents, true);
+	//pm->CreateMeshSection_LinearColor(0, Cube->Vertices, Cube->Triangles, Cube->Normals, Cube->Uvs, VertexColors, Tangents, true);
+	RuntimeMeshComponent->CreateSectionFromComponents(0, 0, 0,
+				Cube->Vertices, Cube->Triangles, Cube->Normals, Cube->Uvs, VertexColors, Tangents, ERuntimeMeshUpdateFrequency::Average, true);
 }
 
-void AChunk::UpdateChunkMesh()
+void AChunkManager::UpdateChunkMesh()
 {
-	pm->ClearMeshSection(0);
-	CreateChunk();
+	//pm->ClearMeshSection(0);
+	//CreateChunk();
 }
 
-void AChunk::CreateChunk()
+void AChunkManager::CreateChunk()
 {	
 	Cube->ClearMeshData();
 
@@ -143,7 +148,7 @@ void AChunk::CreateChunk()
 	//UE_LOG(LogTemp, Warning, TEXT("%f ms"), (End-Start) * 1000);
 }
 
-void AChunk::SetBlockType(const int Sum)
+void AChunkManager::SetBlockType(const int Sum)
 {
 	if(Sum >= 0) Cube->BlockVariations(BlockType::Sand);
 	//if(Sum > 30) Cube->BlockVariations(BlockType::Dirt);

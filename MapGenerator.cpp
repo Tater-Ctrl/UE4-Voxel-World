@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "MapGenerator.h"
 
 // Sets default values
@@ -11,7 +8,7 @@ AMapGenerator::AMapGenerator()
 
 	Simplex = new SimplexNoise();
 	CaveGen = new CaveGenerator();
-	BlockEditor = new ABlockEditor(&NoiseMap, &Chunks, &ChunkX, &ChunkY, &ChunkZ);
+	BlockEditor = new ABlockEditor(&NoiseMap, &Chunks);
 	
 	TextureAtlas = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Texture_Atlas/Atlas_M.Atlas_M"));
 }
@@ -74,13 +71,10 @@ void AMapGenerator::CreateGreedyMesh(FVector2D ChunkID)
 	
 	CreateChunkNoise(FVector2D(0, 0));
 
-	AGreedyMesh* GreedyChunk = GetWorld()->SpawnActor<AGreedyMesh>(FVector(ChunkID.X * 960.f, ChunkID.Y * 960.f, 0), FRotator(0.f, 0.f, 0.f));
+	AGreedyMesh* GreedyChunk = GetWorld()->SpawnActor<AGreedyMesh>(
+		FVector(ChunkID.X * CHUNK_OFFSET, ChunkID.Y * CHUNK_OFFSET, 0), FRotator(0.f, 0.f, 0.f));
 
 	GreedyChunk->NoiseMap = &NoiseMap;
-	GreedyChunk->ChunkX = &ChunkX;
-	GreedyChunk->ChunkY = &ChunkY;
-	GreedyChunk->ChunkZ = &ChunkZ;
-	
 	GreedyChunk->CreateGreedyChunk(ChunkID);
 
 	GreedyMesh.Add(ChunkID, GreedyChunk);
@@ -109,13 +103,13 @@ void AMapGenerator::CreateChunk(const FVector2D Pos)
 
 void AMapGenerator::CreateChunkNoise(const FVector2D Pos)
 {
-	FMultiArray Arr(this->ChunkX, this->ChunkY, this->ChunkZ);
+	FMultiArray Arr(CHUNK_WIDTH, CHUNK_WIDTH, CHUNK_HEIGHT);
 			
-	for(int X = 0; X < this->ChunkX; ++X)
+	for(int X = 0; X < CHUNK_WIDTH; ++X)
 	{
-		for(int Y = 0; Y < this->ChunkY; ++Y)
+		for(int Y = 0; Y < CHUNK_WIDTH; ++Y)
 		{
-			const int Height = (this->Simplex->fractal2D(4, 0.002f, X + (Pos.X * this->ChunkX), Y + (Pos.Y * this->ChunkY)) + 1) * (this->ChunkZ / 2);
+			const int Height = (this->Simplex->fractal2D(4, 0.004f, X + (Pos.X * CHUNK_WIDTH), Y + (Pos.Y * CHUNK_WIDTH)) + 1) * (CHUNK_HEIGHT / 2);
 			const int Sum = floor(MapCurve->GetFloatValue(Height)) + 30;
 
 			for(int Z = 0; Z < Sum; ++Z)
@@ -127,14 +121,14 @@ void AMapGenerator::CreateChunkNoise(const FVector2D Pos)
 	this->NoiseMap.Add(Pos, Arr);
 }
 
-void AMapGenerator::BreakBlock(const FVector Position, const FVector2D ChunkID)
+void AMapGenerator::BreakBlock(const FVector Position, const FVector HitNormal)
 {
-	BlockEditor->BreakBlock(Position, ChunkID);
+	BlockEditor->BreakBlock(Position, HitNormal);
 }
 
-void AMapGenerator::PlaceBlock(const FVector Position, const FVector2D ChunkID)
+void AMapGenerator::PlaceBlock(const FVector Position, const FVector HitNormal)
 {
-	BlockEditor->PlaceBlock(Position, ChunkID);
+	BlockEditor->PlaceBlock(Position, HitNormal);
 }
 
 void AMapGenerator::DestroyChunks()
@@ -157,13 +151,13 @@ void AMapGenerator::DestroyChunks()
 
 void AMapGenerator::EditorDrawChunk(const FVector2D Pos)
 {
-	AChunk* newChunk = GetWorld()->SpawnActor<AChunk>(FVector(Pos.X * 960, Pos.Y * 960, 0), FRotator(0.f, 0.f, 0.f));
+	AChunk* newChunk = GetWorld()->SpawnActor<AChunk>(FVector(Pos.X * CHUNK_OFFSET, Pos.Y * CHUNK_OFFSET, 0), FRotator(0.f, 0.f, 0.f));
 	// Assign the X, Y, Z width pointers of chunk
-	newChunk->chunkX = &this->ChunkX; newChunk->chunkY = &this->ChunkY;	newChunk->chunkZ = &this->ChunkZ;
-	newChunk->chunkID = Pos;
+	newChunk->ChunkID = Pos;
 	newChunk->pm->SetMaterial(0, this->TextureAtlas);
 	newChunk->NoiseMap = &this->NoiseMap;
 
+	//newChunk->ChunkInit();
 	newChunk->CreateChunk();
 	Chunks.Add(Pos, newChunk);
 }
@@ -171,13 +165,13 @@ void AMapGenerator::EditorDrawChunk(const FVector2D Pos)
 
 void AMapGenerator::DrawChunk(const FVector2D Pos)
 {
-	AChunk* newChunk = GetWorld()->SpawnActor<AChunk>(FVector(Pos.X * 960, Pos.Y * 960, 0), FRotator(0.f, 0.f, 0.f));
+	AChunk* newChunk = GetWorld()->SpawnActor<AChunk>(FVector(Pos.X * CHUNK_OFFSET, Pos.Y * CHUNK_OFFSET, 0), FRotator(0.f, 0.f, 0.f));
 	// Assign the X, Y, Z width pointers of chunk
-	newChunk->chunkX = &this->ChunkX; newChunk->chunkY = &this->ChunkY;	newChunk->chunkZ = &this->ChunkZ;
-	newChunk->chunkID = Pos;
+	newChunk->ChunkID = Pos;
 	newChunk->pm->SetMaterial(0, this->TextureAtlas);
 	newChunk->NoiseMap = &this->NoiseMap;
-
+	//newChunk->ChunkInit();
+	
 	CreateChunkQueue.Enqueue(newChunk);
 }
 
@@ -191,8 +185,13 @@ void AMapGenerator::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("Success!"));
 	}
 
-	InitChunks();
-	//InitGreedyMesh();
+	if(EnableGreedyMesh)
+	{
+		InitGreedyMesh();
+	} else
+	{
+		InitChunks();
+	}
 }
 
 void AMapGenerator::Tick(float DeltaSeconds)
@@ -201,14 +200,16 @@ void AMapGenerator::Tick(float DeltaSeconds)
 	//If Player is active then update position around it
 	 if(Player)
 	 {
-	 	const FVector2D Position = FVector2D(floor(Player->GetActorLocation().X / 960), floor(Player->GetActorLocation().Y / 960));
-	
+	 	FVector2D Position = FVector2D(floor(Player->GetActorLocation().X / CHUNK_OFFSET), floor(Player->GetActorLocation().Y / CHUNK_OFFSET));
+	 
 	 	if(Position != ChunkPosition)
 	 	{
+	 		//UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Position.X, Position.Y);
 	 		ChunkPosition = Position;
 	 		UpdateChunks(Position);
 	 	}
 	 }
+	
 	 if(!HideChunkQueue.IsEmpty())
 	 {
 	 	// Remove 5 items from queue per tick or until empty
@@ -218,11 +219,11 @@ void AMapGenerator::Tick(float DeltaSeconds)
 	 		const int Y = Player->GetActorLocation().Y + (chunkLoaded / 2);
 	 		const int NX = Player->GetActorLocation().X - (chunkLoaded / 2);
 	 		const int NY = Player->GetActorLocation().Y - (chunkLoaded / 2);
-	
+	 
 	 		AChunk* Tmp = nullptr;
 	 		HideChunkQueue.Dequeue(Tmp);
-	
-	 		if(Tmp->chunkID.X > X || Tmp->chunkID.X < NX || Tmp->chunkID.Y > Y || Tmp->chunkID.Y < NY)
+	 
+	 		if(Tmp->ChunkID.X > X || Tmp->ChunkID.X < NX || Tmp->ChunkID.Y > Y || Tmp->ChunkID.Y < NY)
 	 		{
 	 			Tmp->SetActorHiddenInGame(true);
 	 			Tmp->SetActorEnableCollision(false);
@@ -232,15 +233,16 @@ void AMapGenerator::Tick(float DeltaSeconds)
 	 		}
 	 	}
 	 }
-	
+	 
 	 if(!CreateChunkQueue.IsEmpty())
 	 {
 	 	AChunk* Tmp = nullptr;
 	 	CreateChunkQueue.Dequeue(Tmp);
-	 	if(!Chunks.Find(Tmp->chunkID))
+	 	if(!Chunks.Find(Tmp->ChunkID))
 	 	{
+	 		//Tmp->ChunkInit();
 	 		Tmp->CreateChunk();
-	 		Chunks.Add(Tmp->chunkID, Tmp);
+	 		Chunks.Add(Tmp->ChunkID, Tmp);
 	 	}
 	 }
 }
@@ -281,10 +283,6 @@ void AMapGenerator::UpdateChunks(FVector2D Pos)
 				// Create new chunk if it doesn't exist
 				CreateChunk(Position);
 			}		
-
 		}
 	}
 }
-
-
-
