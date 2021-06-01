@@ -21,11 +21,11 @@ public:
 	AGreedyMesh();
 	~AGreedyMesh();
 
-	int* ChunkX;
-	int* ChunkY;
-	int* ChunkZ;
+	//int* CHUNK_WIDTH;
+	//int* CHUNK_WIDTH;
+	//int* CHUNK_HEIGHT;
 
-	int BlockSize = 60;
+	//int BLOCK_SIZE = 60;
 
 	TMap<FVector2D, FMultiArray>* NoiseMap;
 	void CreateGreedyChunk(FVector2D ChunkID);

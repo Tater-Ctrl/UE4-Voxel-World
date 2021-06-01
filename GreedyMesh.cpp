@@ -2,6 +2,7 @@
 
 
 #include "GreedyMesh.h"
+#include "MapVariables.h"
 
 AGreedyMesh::AGreedyMesh()
 {
@@ -49,16 +50,16 @@ void AGreedyMesh::CreateGreedyChunk(FVector2D ChunkID)
 {
 	Noise = &NoiseMap->operator[](ChunkID);
 	double start = FPlatformTime::Seconds();
-	for(int Z = 0; Z < *ChunkZ; ++Z)
+	for(int Z = 0; Z < CHUNK_HEIGHT; ++Z)
 	{
 		CreateTop(Z);
 	}
-	for(int X = 0; X < *ChunkX; ++X)
+	for(int X = 0; X < CHUNK_WIDTH; ++X)
 	{
 		CreateRight(X);
 		CreateLeft(X);
 	}
-	for(int Y = 0; Y < *ChunkY; ++Y)
+	for(int Y = 0; Y < CHUNK_WIDTH; ++Y)
 	{
 		CreateFront(Y);
 		CreateBack(Y);
@@ -75,13 +76,13 @@ void AGreedyMesh::CreateTop(const int Z)
 {
 	TArray<bool> CheckedBlock;
 
-	CheckedBlock.Init(false, *ChunkX * *ChunkY);
+	CheckedBlock.Init(false, CHUNK_WIDTH * CHUNK_WIDTH);
 	
-	for(int X = 0; X < *ChunkY; ++X)
+	for(int X = 0; X < CHUNK_WIDTH; ++X)
 	{
-		for(int Y = 0; Y < *ChunkX; ++Y)
+		for(int Y = 0; Y < CHUNK_WIDTH; ++Y)
 		{
-			if(!CheckedBlock[X + (Y * *ChunkY)])
+			if(!CheckedBlock[X + (Y * CHUNK_WIDTH)])
 			{
 				bool Greed = false;
 				bool ExpandX = true;
@@ -89,18 +90,18 @@ void AGreedyMesh::CreateTop(const int Z)
 				int AddX = X;
 				int AddY = Y;
 
-				int MaxLength = *ChunkY;
+				int MaxLength = CHUNK_WIDTH;
 			
 				if(Noise->Get(X, Y, Z) > 0 && Noise->Get(X, Y, Z + 1) == 0)
 				{
 					AddIndices();
 					AddNormals(FVector(0.0f, 0.0f, 1.0f));
 
-					Vertices.Add(FVector(X * BlockSize, Y * BlockSize, (Z + 1) * BlockSize));
+					Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, (Z + 1) * BLOCK_SIZE));
 				
 					while(!Greed)
 					{					
-						if(Noise->Get(AddX, AddY, Z) > 0 && Noise->Get(AddX, AddY, Z + 1) == 0 && AddY < MaxLength && !CheckedBlock[AddX + (AddY * 16)])
+						if(Noise->Get(AddX, AddY, Z) > 0 && Noise->Get(AddX, AddY, Z + 1) == 0 && AddY < MaxLength && !CheckedBlock[AddX + (AddY * CHUNK_WIDTH)])
 						{
 							// Check neighbour if you can expand
 							if(Noise->Get(AddX + 1, AddY, Z) <= 0 || Noise->Get(AddX + 1, AddY, Z + 1) != 0)
@@ -108,7 +109,7 @@ void AGreedyMesh::CreateTop(const int Z)
 								ExpandX = false;
 							}
 							
-							CheckedBlock[AddX + (AddY * *ChunkY)] = true;
+							CheckedBlock[AddX + (AddY * CHUNK_WIDTH)] = true;
 							++AddY;
 						} else
 						{
@@ -116,17 +117,17 @@ void AGreedyMesh::CreateTop(const int Z)
 							{
 								if(AddX == X)
 								{
-									Vertices.Add(FVector(X * BlockSize, AddY * BlockSize, (Z + 1) * BlockSize));
+									Vertices.Add(FVector(X * BLOCK_SIZE, AddY * BLOCK_SIZE, (Z + 1) * BLOCK_SIZE));
 									MaxLength = AddY;
 								}
 								AddY = Y;
 								++AddX;
 							} else
 							{
-								if(AddX == X) Vertices.Add(FVector(X * BlockSize, AddY * BlockSize, (Z + 1) * BlockSize));
+								if(AddX == X) Vertices.Add(FVector(X * BLOCK_SIZE, AddY * BLOCK_SIZE, (Z + 1) * BLOCK_SIZE));
 								
-								Vertices.Add(FVector((AddX + 1) * BlockSize, AddY * BlockSize, (Z + 1) * BlockSize));
-								Vertices.Add(FVector((AddX + 1) * BlockSize, Y * BlockSize, (Z + 1) * BlockSize));
+								Vertices.Add(FVector((AddX + 1) * BLOCK_SIZE, AddY * BLOCK_SIZE, (Z + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector((AddX + 1) * BLOCK_SIZE, Y * BLOCK_SIZE, (Z + 1) * BLOCK_SIZE));
 								Greed = true;
 							}
 						}
@@ -141,13 +142,13 @@ void AGreedyMesh::CreateFront(const int Y)
 {
 	TArray<bool> CheckedBlock;
 
-	CheckedBlock.Init(false, *ChunkX * *ChunkZ);
+	CheckedBlock.Init(false, CHUNK_WIDTH * CHUNK_HEIGHT);
 	
-	for(int Z = 0; Z < *ChunkZ; ++Z)
+	for(int Z = 0; Z < CHUNK_HEIGHT; ++Z)
 	{
-		for(int X = 0; X < *ChunkX; ++X)
+		for(int X = 0; X < CHUNK_WIDTH; ++X)
 		{
-			if(!CheckedBlock[X + (Z * 16)])
+			if(!CheckedBlock[X + (Z * CHUNK_WIDTH)])
 			{
 				bool Greed = false;
 				bool ExpandX = true;
@@ -155,7 +156,7 @@ void AGreedyMesh::CreateFront(const int Y)
 				int AddX = X;
 				int AddZ = Z;
 
-				int MaxLength = *ChunkY;
+				int MaxLength = CHUNK_WIDTH;
 			
 				if(Noise->Get(X, Y, Z) > 0 && Noise->Get(X, Y + 1, Z) == 0)
 				{
@@ -164,7 +165,7 @@ void AGreedyMesh::CreateFront(const int Y)
 				
 					while(!Greed)
 					{				
-						if(Noise->Get(AddX, Y, AddZ) > 0 && Noise->Get(AddX, Y + 1, AddZ) == 0 && AddX < MaxLength && !CheckedBlock[AddX + (AddZ * *ChunkY)])
+						if(Noise->Get(AddX, Y, AddZ) > 0 && Noise->Get(AddX, Y + 1, AddZ) == 0 && AddX < MaxLength && !CheckedBlock[AddX + (AddZ * CHUNK_WIDTH)])
 						{
 							// Check neighbour if you can expand
 							if(Noise->Get(AddX, Y, AddZ + 1) <= 0 || Noise->Get(AddX, Y + 1, AddZ + 1) != 0)
@@ -172,7 +173,7 @@ void AGreedyMesh::CreateFront(const int Y)
 								ExpandX = false;
 							}
 							
-							CheckedBlock[AddX + (AddZ * *ChunkY)] = true;
+							CheckedBlock[AddX + (AddZ * CHUNK_WIDTH)] = true;
 							++AddX;
 						} else
 						{
@@ -180,18 +181,18 @@ void AGreedyMesh::CreateFront(const int Y)
 							{
 								if(AddZ == Z)
 								{
-									Vertices.Add(FVector(AddX * BlockSize, (Y + 1) * BlockSize, Z * BlockSize));
+									Vertices.Add(FVector(AddX * BLOCK_SIZE, (Y + 1) * BLOCK_SIZE, Z * BLOCK_SIZE));
 									MaxLength = AddX;
 								}
 								AddX = X;
 								++AddZ;
 							} else
 							{
-								if(AddZ == Z) Vertices.Add(FVector(AddX * BlockSize, (Y + 1) * BlockSize, Z * BlockSize));
+								if(AddZ == Z) Vertices.Add(FVector(AddX * BLOCK_SIZE, (Y + 1) * BLOCK_SIZE, Z * BLOCK_SIZE));
 								
-								Vertices.Add(FVector(AddX * BlockSize, (Y + 1) * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector(X * BlockSize, (Y + 1) * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector(X * BlockSize, (Y + 1) * BlockSize, Z * BlockSize));
+								Vertices.Add(FVector(AddX * BLOCK_SIZE, (Y + 1) * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector(X * BLOCK_SIZE, (Y + 1) * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector(X * BLOCK_SIZE, (Y + 1) * BLOCK_SIZE, Z * BLOCK_SIZE));
 								Greed = true;
 							}
 						}
@@ -206,13 +207,13 @@ void AGreedyMesh::CreateBack(const int Y)
 {
 	TArray<bool> CheckedBlock;
 
-	CheckedBlock.Init(false, *ChunkX * *ChunkZ);
+	CheckedBlock.Init(false, CHUNK_WIDTH * CHUNK_HEIGHT);
 	
-	for(int Z = 0; Z < *ChunkZ; ++Z)
+	for(int Z = 0; Z < CHUNK_HEIGHT; ++Z)
 	{
-		for(int X = 0; X < *ChunkX; ++X)
+		for(int X = 0; X < CHUNK_WIDTH; ++X)
 		{
-			if(!CheckedBlock[X + (Z * 16)])
+			if(!CheckedBlock[X + (Z * CHUNK_WIDTH)])
 			{
 				bool Greed = false;
 				bool ExpandZ = true;
@@ -220,18 +221,18 @@ void AGreedyMesh::CreateBack(const int Y)
 				int AddX = X;
 				int AddZ = Z;
 
-				int MaxLength = *ChunkY;
+				int MaxLength = CHUNK_WIDTH;
 			
 				if(Noise->Get(X, Y, Z) > 0 && Noise->Get(X, Y - 1, Z) == 0)
 				{
 					AddIndices(true);
 					AddNormals(FVector(0.0f, -1.0f, 0.0f));
 
-					Vertices.Add(FVector(X * BlockSize, Y * BlockSize, Z * BlockSize));
+					Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 				
 					while(!Greed)
 					{	
-						if(Noise->Get(AddX, Y, AddZ) > 0 && Noise->Get(AddX, Y - 1, AddZ) == 0 && AddX < MaxLength && !CheckedBlock[AddX + (AddZ * *ChunkY)])
+						if(Noise->Get(AddX, Y, AddZ) > 0 && Noise->Get(AddX, Y - 1, AddZ) == 0 && AddX < MaxLength && !CheckedBlock[AddX + (AddZ * CHUNK_WIDTH)])
 						{
 							// Check neighbour if you can expand
 							if(Noise->Get(AddX, Y, AddZ + 1) <= 0 || Noise->Get(AddX, Y - 1, AddZ + 1) != 0)
@@ -239,7 +240,7 @@ void AGreedyMesh::CreateBack(const int Y)
 								ExpandZ = false;
 							}
 							
-							CheckedBlock[AddX + (AddZ * *ChunkY)] = true;
+							CheckedBlock[AddX + (AddZ * CHUNK_WIDTH)] = true;
 							++AddX;
 						} else
 						{
@@ -247,17 +248,17 @@ void AGreedyMesh::CreateBack(const int Y)
 							{
 								if(AddX == X)
 								{
-									Vertices.Add(FVector(AddX * BlockSize, Y * BlockSize, Z * BlockSize));
+									Vertices.Add(FVector(AddX * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 									MaxLength = AddX;
 								}
 								AddX = X;
 								++AddZ;
 							} else
 							{
-								if(AddZ == Z) Vertices.Add(FVector(AddX * BlockSize, Y * BlockSize, Z * BlockSize));
+								if(AddZ == Z) Vertices.Add(FVector(AddX * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 								
-								Vertices.Add(FVector(AddX * BlockSize, Y * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector(X * BlockSize, Y * BlockSize, (AddZ + 1) * BlockSize));
+								Vertices.Add(FVector(AddX * BLOCK_SIZE, Y * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
 								Greed = true;
 							}
 						}
@@ -272,13 +273,13 @@ void AGreedyMesh::CreateRight(const int X)
 {
 	TArray<bool> CheckedBlock;
 
-	CheckedBlock.Init(false, *ChunkY * *ChunkZ);
+	CheckedBlock.Init(false, CHUNK_WIDTH * CHUNK_HEIGHT);
 	
-	for(int Z = 0; Z < *ChunkZ; ++Z)
+	for(int Z = 0; Z < CHUNK_HEIGHT; ++Z)
 	{
-		for(int Y = 0; Y < *ChunkX; ++Y)
+		for(int Y = 0; Y < CHUNK_WIDTH; ++Y)
 		{
-			if(!CheckedBlock[Y + (Z * 16)])
+			if(!CheckedBlock[Y + (Z * CHUNK_WIDTH)])
 			{
 				bool Greed = false;
 				bool ExpandX = true;
@@ -286,7 +287,7 @@ void AGreedyMesh::CreateRight(const int X)
 				int AddY = Y;
 				int AddZ = Z;
 
-				int MaxLength = *ChunkY;
+				int MaxLength = CHUNK_WIDTH;
 			
 				if(Noise->Get(X, Y, Z) > 0 && Noise->Get(X - 1, Y, Z) == 0)
 				{
@@ -295,7 +296,7 @@ void AGreedyMesh::CreateRight(const int X)
 				
 					while(!Greed)
 					{	
-						if(Noise->Get(X, AddY, AddZ) > 0 && Noise->Get(X - 1, AddY, AddZ) == 0 && AddY < MaxLength && !CheckedBlock[AddY + (AddZ * *ChunkY)])
+						if(Noise->Get(X, AddY, AddZ) > 0 && Noise->Get(X - 1, AddY, AddZ) == 0 && AddY < MaxLength && !CheckedBlock[AddY + (AddZ * CHUNK_WIDTH)])
 						{
 							// Check neighbour if you can expand
 							if(Noise->Get(X, AddY, AddZ + 1) <= 0 || Noise->Get(X - 1, AddY, AddZ + 1) != 0)
@@ -303,7 +304,7 @@ void AGreedyMesh::CreateRight(const int X)
 								ExpandX = false;
 							}
 							
-							CheckedBlock[AddY + (AddZ * *ChunkY)] = true;
+							CheckedBlock[AddY + (AddZ * CHUNK_WIDTH)] = true;
 							++AddY;
 						} else
 						{
@@ -311,18 +312,18 @@ void AGreedyMesh::CreateRight(const int X)
 							{
 								if(AddZ == X)
 								{
-									Vertices.Add(FVector(X * BlockSize, AddY * BlockSize, Z * BlockSize));
+									Vertices.Add(FVector(X * BLOCK_SIZE, AddY * BLOCK_SIZE, Z * BLOCK_SIZE));
 									MaxLength = AddY;
 								}
 								AddY = Y;
 								++AddZ;
 							} else
 							{
-								if(AddZ == Z) Vertices.Add(FVector(X * BlockSize, AddY * BlockSize, Z * BlockSize));
+								if(AddZ == Z) Vertices.Add(FVector(X * BLOCK_SIZE, AddY * BLOCK_SIZE, Z * BLOCK_SIZE));
 								
-								Vertices.Add(FVector(X * BlockSize, AddY * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector(X * BlockSize, Y * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector(X * BlockSize, Y * BlockSize, Z * BlockSize));
+								Vertices.Add(FVector(X * BLOCK_SIZE, AddY * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 								Greed = true;
 							}
 						}
@@ -337,13 +338,13 @@ void AGreedyMesh::CreateLeft(const int X)
 {
 	TArray<bool> CheckedBlock;
 
-	CheckedBlock.Init(false, *ChunkY * *ChunkZ);
+	CheckedBlock.Init(false, CHUNK_WIDTH * CHUNK_HEIGHT);
 	
-	for(int Z = 0; Z < *ChunkZ; ++Z)
+	for(int Z = 0; Z < CHUNK_HEIGHT; ++Z)
 	{
-		for(int Y = 0; Y < *ChunkX; ++Y)
+		for(int Y = 0; Y < CHUNK_WIDTH; ++Y)
 		{
-			if(!CheckedBlock[Y + (Z * 16)])
+			if(!CheckedBlock[Y + (Z * CHUNK_WIDTH)])
 			{
 				bool Greed = false;
 				bool ExpandX = true;
@@ -351,18 +352,18 @@ void AGreedyMesh::CreateLeft(const int X)
 				int AddY = Y;
 				int AddZ = Z;
 
-				int MaxLength = *ChunkY;
+				int MaxLength = CHUNK_WIDTH;
 			
 				if(Noise->Get(X, Y, Z) > 0 && Noise->Get(X + 1, Y, Z) == 0)
 				{
 					AddIndices(true);
 					AddNormals(FVector(1.0f, 0.0f, 0.0f));
 
-					Vertices.Add(FVector((X + 1) * BlockSize, Y * BlockSize, Z * BlockSize));
+					Vertices.Add(FVector((X + 1) * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 				
 					while(!Greed)
 					{	
-						if(Noise->Get(X, AddY, AddZ) > 0 && Noise->Get(X + 1, AddY, AddZ) == 0 && AddY < MaxLength && !CheckedBlock[AddY + (AddZ * *ChunkY)])
+						if(Noise->Get(X, AddY, AddZ) > 0 && Noise->Get(X + 1, AddY, AddZ) == 0 && AddY < MaxLength && !CheckedBlock[AddY + (AddZ * CHUNK_WIDTH)])
 						{
 							// Check neighbour if you can expand
 							if(Noise->Get(X, AddY, AddZ + 1) <= 0 || Noise->Get(X + 1, AddY, AddZ + 1) != 0)
@@ -370,7 +371,7 @@ void AGreedyMesh::CreateLeft(const int X)
 								ExpandX = false;
 							}
 							
-							CheckedBlock[AddY + (AddZ * *ChunkY)] = true;
+							CheckedBlock[AddY + (AddZ * CHUNK_WIDTH)] = true;
 							++AddY;
 						} else
 						{
@@ -378,17 +379,17 @@ void AGreedyMesh::CreateLeft(const int X)
 							{
 								if(AddZ == X)
 								{
-									Vertices.Add(FVector((X + 1) * BlockSize, AddY * BlockSize, Z * BlockSize));
+									Vertices.Add(FVector((X + 1) * BLOCK_SIZE, AddY * BLOCK_SIZE, Z * BLOCK_SIZE));
 									MaxLength = AddY;
 								}
 								AddY = Y;
 								++AddZ;
 							} else
 							{
-								if(AddZ == Z) Vertices.Add(FVector((X + 1) * BlockSize, AddY * BlockSize, Z * BlockSize));
+								if(AddZ == Z) Vertices.Add(FVector((X + 1) * BLOCK_SIZE, AddY * BLOCK_SIZE, Z * BLOCK_SIZE));
 								
-								Vertices.Add(FVector((X + 1) * BlockSize, AddY * BlockSize, (AddZ + 1) * BlockSize));
-								Vertices.Add(FVector((X + 1) * BlockSize, Y * BlockSize, (AddZ + 1) * BlockSize));
+								Vertices.Add(FVector((X + 1) * BLOCK_SIZE, AddY * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
+								Vertices.Add(FVector((X + 1) * BLOCK_SIZE, Y * BLOCK_SIZE, (AddZ + 1) * BLOCK_SIZE));
 								Greed = true;
 							}
 						}

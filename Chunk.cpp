@@ -9,7 +9,7 @@ AChunk::AChunk()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	
-	Cube = new ACreateCube();
+	Cube = new FCubeCreation();
 
 	// Colors for some reason?
 	VertexColors.Init(FLinearColor(0.0f,0.0f,0.0f,0.5), 256);

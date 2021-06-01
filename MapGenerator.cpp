@@ -1,9 +1,35 @@
 #include "MapGenerator.h"
+#include "ChunkManager.h"
 
 // Sets default values
+
+void AMapGenerator::InitChunkRmc()
+{ 
+	if(MapCurve == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Missing MapCurve from MapGenerator! Returning"));
+		return;
+	}
+
+	ChunkManager = GetWorld()->SpawnActor<AChunkManager>(FVector(0, 0, 0), FRotator(0 ,0 ,0)); 
+	
+	for(int X = -chunkLoaded / 2; X < chunkLoaded / 2; ++X)
+	{
+		for(int Y = -chunkLoaded / 2; Y < chunkLoaded / 2; ++Y)
+		{
+			if(!NoiseMap.Find(FVector2D(X, Y)))
+			{
+				CreateChunkNoise(FVector2D(X, Y));
+			}
+			ChunkManager->NoiseMap.Add(FVector2D(X, Y), NoiseMap[FVector2D(X, Y)]);
+			ChunkManager->CreateChunk(FVector2D(X, Y));
+		}
+	}
+}
+
 AMapGenerator::AMapGenerator()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	Simplex = new SimplexNoise();
@@ -178,12 +204,15 @@ void AMapGenerator::DrawChunk(const FVector2D Pos)
 void AMapGenerator::BeginPlay()
 {
 	Super::BeginPlay();
+	ChunkManager = GetWorld()->SpawnActor<AChunkManager>(FVector(0, 0, 0), FRotator(0 ,0 ,0)); 
 	Player = Cast<AActor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 	
 	if(Player)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Success!"));
 	}
+
+	//InitChunkRmc();
 
 	if(EnableGreedyMesh)
 	{
@@ -198,17 +227,17 @@ void AMapGenerator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	//If Player is active then update position around it
-	 if(Player)
-	 {
-	 	FVector2D Position = FVector2D(floor(Player->GetActorLocation().X / CHUNK_OFFSET), floor(Player->GetActorLocation().Y / CHUNK_OFFSET));
-	 
-	 	if(Position != ChunkPosition)
-	 	{
-	 		//UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Position.X, Position.Y);
-	 		ChunkPosition = Position;
-	 		UpdateChunks(Position);
-	 	}
-	 }
+	 //if(Player)
+	 //{
+	 //	FVector2D Position = FVector2D(floor(Player->GetActorLocation().X / CHUNK_OFFSET), floor(Player->GetActorLocation().Y / CHUNK_OFFSET));
+	 //
+	 //	if(Position != ChunkPosition)
+	 //	{
+	 //		//UE_LOG(LogTemp, Warning, TEXT("%f, %f"), Position.X, Position.Y);
+	 //		ChunkPosition = Position;
+	 //		UpdateChunks(Position);
+	 //	}
+	 //}
 	
 	 if(!HideChunkQueue.IsEmpty())
 	 {

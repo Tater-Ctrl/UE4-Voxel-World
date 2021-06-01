@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "CreateCube.h"
+#include "CubeCreation.h"
 #include "ProceduralMeshComponent.h"
 #include "MultiArray.h"
 #include "MapVariables.h"
@@ -29,7 +29,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "MyProceduralMesh")
 	UProceduralMeshComponent* pm;
 	
-	ACreateCube* Cube;
+	FCubeCreation* Cube;
 
 	UPROPERTY(EditAnywhere, Category="Chunk ID")
 	bool IsActive;

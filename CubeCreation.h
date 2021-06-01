@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "BlockType.h"
 #include "MapVariables.h"
+#include "CubeCreation.generated.h"
 
-class PROCMAP_API ACreateCube
+USTRUCT()
+struct PROCMAP_API FCubeCreation
 {
-
+	GENERATED_BODY()
 private:
 	int cubeSize = 60;
 	float uvScale = 1.f / TEXTURE_ATLAS_SIZE;
@@ -27,7 +29,7 @@ private:
 
 public:	
 	// Sets default values for this actor's properties
-	ACreateCube();
+	FCubeCreation();
 
 	TArray<FVector> Vertices;
 	TArray<FVector> Normals;

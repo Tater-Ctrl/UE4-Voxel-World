@@ -13,6 +13,8 @@
 #include "MapVariables.h"
 #include "MapGenerator.generated.h"
 
+class AChunkManager;
+
 UCLASS()
 class PROCMAP_API AMapGenerator : public AActor
 {
@@ -35,12 +37,6 @@ public:
 	int chunkLoaded = 32;
 	UPROPERTY(EditAnywhere, Category="Chunk Parameters")
 	bool EnableGreedyMesh;
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chunk Parameters")
-	//int CHUNK_WIDTH = 16;
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chunk Parameters")
-	//int CHUNK_WIDTH = 16;
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chunk Parameters")
-	//int CHUNK_HEIGHT = 256;
 	UPROPERTY(EditAnywhere, Category="Chunk Parameters")
 	UCurveFloat* MapCurve;
 
@@ -53,7 +49,10 @@ public:
 
 	SimplexNoise* Simplex;
 	ABlockEditor* BlockEditor;
-	ACreateCube* Cube;
+	FCubeCreation* Cube;
+	
+	UPROPERTY()
+	AChunkManager* ChunkManager;
 	
 	UPROPERTY()
 	UMaterialInterface* TextureAtlas;
@@ -78,6 +77,9 @@ public:
 
 	UFUNCTION(CallInEditor, Category="Greedy Chunk")
 	void InitGreedyMesh();
+
+	UFUNCTION(CallInEditor, Category="Chunk Editing")
+	void InitChunkRmc();
 	
 	void CreateGreedyMesh(FVector2D ChunkID);
 

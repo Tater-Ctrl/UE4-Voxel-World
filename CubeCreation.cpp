@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "CreateCube.h"
+#include "CubeCreation.h"
 
 // Sets default values
-ACreateCube::ACreateCube()
+FCubeCreation::FCubeCreation()
 {
 	VerticesCount = 0;
 }
 
-void ACreateCube::BlockVariations(const BlockType Type)
+void FCubeCreation::BlockVariations(const BlockType Type)
 {
 	switch(Type)
 	{
@@ -37,7 +37,7 @@ void ACreateCube::BlockVariations(const BlockType Type)
 	}
 }
 
-void ACreateCube::AddNormals(const FVector Nor)
+void FCubeCreation::AddNormals(const FVector Nor)
 {
 	Normals.Add(Nor);
 	Normals.Add(Nor);
@@ -45,7 +45,7 @@ void ACreateCube::AddNormals(const FVector Nor)
 	Normals.Add(Nor);
 }
 
-void ACreateCube::AddTriangles()
+void FCubeCreation::AddTriangles()
 {
 	Triangles.Add(0 + Vertices.Num());
 	Triangles.Add(1 + Vertices.Num());
@@ -55,7 +55,7 @@ void ACreateCube::AddTriangles()
 	Triangles.Add(3 + Vertices.Num());
 }
 
-void ACreateCube::AddUV(const int Value)
+void FCubeCreation::AddUV(const int Value)
 {
 	Uvs.Add(FVector2D(uvScale * (Uvx + Value), uvScale * Uvy));
 	Uvs.Add(FVector2D(uvScale * (Uvx + Value), uvScale * Uvy - uvScale));
@@ -63,13 +63,13 @@ void ACreateCube::AddUV(const int Value)
 	Uvs.Add(FVector2D(uvScale * (Uvx + Value) - uvScale, uvScale * Uvy));
 }
 
-void ACreateCube::Top(const int X, const int Y, const int Z)
+void FCubeCreation::Top(const int X, const int Y, const int Z)
 {	
 	AddTriangles();
 	AddUV(TextureTop);
 	AddNormals(FVector(0.0f, 0.0f, 1.0f));
 
-	Vertices.Add(FVector( X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
+	Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
 	Vertices.Add(FVector(X * BLOCK_SIZE, BLOCK_SIZE + Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
 	Vertices.Add(FVector(BLOCK_SIZE + X * BLOCK_SIZE, BLOCK_SIZE + Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
 	Vertices.Add(FVector(BLOCK_SIZE + X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
@@ -77,7 +77,7 @@ void ACreateCube::Top(const int X, const int Y, const int Z)
 	VerticesCount += 4;
 }
 
-void ACreateCube::Bottom(const int X, const int Y, const int Z)
+void FCubeCreation::Bottom(const int X, const int Y, const int Z)
 {
 	AddTriangles();
 	AddUV(TextureBottom);
@@ -91,7 +91,7 @@ void ACreateCube::Bottom(const int X, const int Y, const int Z)
 	VerticesCount += 4;
 }
 
-void ACreateCube::Front(const int X, const int Y, const int Z)
+void FCubeCreation::Front(const int X, const int Y, const int Z)
 {
 	AddTriangles();
 	AddUV(TextureSide);
@@ -105,21 +105,21 @@ void ACreateCube::Front(const int X, const int Y, const int Z)
 	VerticesCount += 4;
 }
 
-void ACreateCube::Back(const int X, const int Y, const int Z)
+void FCubeCreation::Back(const int X, const int Y, const int Z)
 {
 	AddTriangles();
 	AddUV(TextureSide);
 	AddNormals(FVector(0.0f, -1.0f, 0.0f));
 	
-	Vertices.Add(FVector(0 + X * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
-	Vertices.Add(FVector(0 + X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
+	Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
+	Vertices.Add(FVector(X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + Z * BLOCK_SIZE));
 	Vertices.Add(FVector(BLOCK_SIZE + X * BLOCK_SIZE, Y * BLOCK_SIZE, BLOCK_SIZE + (Z * BLOCK_SIZE)));
 	Vertices.Add(FVector(BLOCK_SIZE + X * BLOCK_SIZE, Y * BLOCK_SIZE, Z * BLOCK_SIZE));
 
 	VerticesCount += 4;
 }
 
-void ACreateCube::Left(const int X, const int Y, const int Z)
+void FCubeCreation::Left(const int X, const int Y, const int Z)
 {
 	AddTriangles();
 	AddUV(TextureSide);
@@ -133,7 +133,7 @@ void ACreateCube::Left(const int X, const int Y, const int Z)
 	VerticesCount += 4;
 }
 
-void ACreateCube::Right(const int X, const int Y, const int Z)
+void FCubeCreation::Right(const int X, const int Y, const int Z)
 {
 	AddTriangles();
 	AddUV(TextureSide);
@@ -147,7 +147,7 @@ void ACreateCube::Right(const int X, const int Y, const int Z)
 	VerticesCount += 4;
 }
 
-void ACreateCube::ClearMeshData()
+void FCubeCreation::ClearMeshData()
 {
 	Vertices.Empty();
 	Triangles.Empty();

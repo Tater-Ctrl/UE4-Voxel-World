@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "CreateCube.h"
+#include "CubeCreation.h"
 #include "Components/RuntimeMeshComponentStatic.h"
 #include "MultiArray.h"
 #include "ChunkManager.generated.h"
@@ -23,29 +23,30 @@ class PROCMAP_API AChunkManager : public AActor
 	
 	UPROPERTY()
 	URuntimeMeshComponentStatic* RuntimeMeshComponent;
-	
-	int CheckNeighbourChunk(int X, int Y, int Z, int IdX, int IdY);
 
 	public:	
 	// Sets default values for this actor's properties
 	AChunkManager();
 
-	//UPROPERTY(VisibleAnywhere, Category = "MyProceduralMesh")
-	//UProceduralMeshComponent* pm;
-	
-	ACreateCube* Cube;
-
-	UPROPERTY(EditAnywhere, Category="Chunk ID")
-	FVector2D ChunkID;
+	UPROPERTY()
+	FCubeCreation Cube;
 
 	UPROPERTY(EditAnywhere, Category="Distance to Player")
 	int ChunkDistance = 0;
 
+	UPROPERTY()
+	TMap<FVector2D, FMultiArray> NoiseMap;
+	UPROPERTY()
+	TMap<FVector2D, int> ChunkSection;
+	UPROPERTY()
+	int ChunkIndex;
+
+	UPROPERTY()
+	UMaterialInterface* TextureAtlas;
+
 	void SetBlockType(int Sum);
 	void UpdateChunkMesh();
 
-	TMap<FVector2D, FMultiArray>* NoiseMap;
-
-	void DrawChunk();
-	void CreateChunk();
+	void DrawChunk(FVector2D ChunkID);
+	void CreateChunk(FVector2D ChunkID);
 };
