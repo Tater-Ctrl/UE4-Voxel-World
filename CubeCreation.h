@@ -12,8 +12,7 @@ struct PROCMAP_API FCubeCreation
 {
 	GENERATED_BODY()
 private:
-	int cubeSize = 60;
-	float uvScale = 1.f / TEXTURE_ATLAS_SIZE;
+	float UvScale = 1.f / TEXTURE_ATLAS_SIZE;
 	int Uvx = 1;
 	int Uvy = 1;
 
@@ -33,7 +32,7 @@ public:
 
 	TArray<FVector> Vertices;
 	TArray<FVector> Normals;
-	TArray<int32> Triangles;
+	TArray<int> Triangles;
 	TArray<FVector2D> Uvs;
 
 	void Top(int X, int Y, int Z);

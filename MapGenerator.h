@@ -4,16 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Chunk.h"
 #include "Kismet/GameplayStatics.h"
 #include "SimplexNoise.h"
-#include "CaveGenerator.h"
-#include "BlockEditor.h"
-#include "GreedyMesh.h"
+#include "MultiArray.h"
 #include "MapVariables.h"
 #include "MapGenerator.generated.h"
 
 class AChunkManager;
+
+UENUM()
+enum EChunkMode
+{
+	GreedyMeshPmc	UMETA(DisplayName = "GreedyMeshPMC"),
+	SectionRmc		UMETA(DisplayName = "SectionRMC"),
+};
 
 UCLASS()
 class PROCMAP_API AMapGenerator : public AActor
@@ -21,11 +25,8 @@ class PROCMAP_API AMapGenerator : public AActor
 	GENERATED_BODY()
 
 private:
-	void CreateChunk(FVector2D Pos);
-	TQueue<AChunk*, EQueueMode::Mpsc> CreateChunkQueue;
-	TQueue<AChunk*, EQueueMode::Mpsc> HideChunkQueue;
-
-	CaveGenerator* CaveGen;
+	//TQueue<AChunk*, EQueueMode::Mpsc> CreateChunkQueue;
+	//TQueue<AChunk*, EQueueMode::Mpsc> HideChunkQueue;
 
 	void CreateChunkNoise(FVector2D Pos);
 	
@@ -36,20 +37,14 @@ public:
 	UPROPERTY(EditAnywhere, Category="Chunk Parameters")
 	int chunkLoaded = 32;
 	UPROPERTY(EditAnywhere, Category="Chunk Parameters")
-	bool EnableGreedyMesh;
+	TEnumAsByte<EChunkMode> ChunkMode;
 	UPROPERTY(EditAnywhere, Category="Chunk Parameters")
 	UCurveFloat* MapCurve;
 
 	UPROPERTY()
 	TMap<FVector2D, FMultiArray> NoiseMap;
-	UPROPERTY()
-	TMap<FVector2D, AChunk*> Chunks;
-	UPROPERTY()
-	TMap<FVector2D, AGreedyMesh*> GreedyMesh;
 
-	SimplexNoise* Simplex;
-	ABlockEditor* BlockEditor;
-	FCubeCreation* Cube;
+	SimplexNoise Simplex;
 	
 	UPROPERTY()
 	AChunkManager* ChunkManager;
@@ -62,9 +57,6 @@ public:
 	FVector2D ChunkPosition;
 	
 	UFUNCTION(CallInEditor, Category="Chunk Parameters")
-	void InitChunks();
-	
-	UFUNCTION(CallInEditor, Category="Chunk Parameters")
 	void DestroyChunks();
 
 	virtual void Tick(float DeltaSeconds) override;
@@ -75,15 +67,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chunk Editing")
 	void PlaceBlock(FVector Position, FVector HitNormal);
 
-	UFUNCTION(CallInEditor, Category="Greedy Chunk")
-	void InitGreedyMesh();
-
 	UFUNCTION(CallInEditor, Category="Chunk Editing")
 	void InitChunkRmc();
-	
-	void CreateGreedyMesh(FVector2D ChunkID);
 
-	void EditorDrawChunk(const FVector2D Pos);
-	void DrawChunk(const FVector2D Pos);
+	//void EditorDrawChunk(const FVector2D Pos);
+	//void DrawChunk(const FVector2D Pos);
 	void UpdateChunks(FVector2D Pos);
 };

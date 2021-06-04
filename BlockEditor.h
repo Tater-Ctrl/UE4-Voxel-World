@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "MultiArray.h"
 #include "MapVariables.h"
-#include "Chunk.h"
+#include "ChunkManager.h"
 
 /**
 * 
@@ -11,15 +11,13 @@
 class PROCMAP_API ABlockEditor
 {
 	public:
-	ABlockEditor(TMap<FVector2D, FMultiArray>* NoiseMap, TMap<FVector2D, AChunk*>* Chunks);
+	ABlockEditor(AChunkManager* Cm);
+	AChunkManager* Cm;
 
-	TMap<FVector2D, FMultiArray>* NoiseMap;
-	TMap<FVector2D, AChunk*>* Chunks;
+	void BreakBlock(FVector WorldPosition, FVector HitNormal, TMap<FVector2D, FMultiArray>* NoiseMap) const;
+	void PlaceBlock(FVector WorldPosition, FVector HitNormal, TMap<FVector2D, FMultiArray>* NoiseMap) const;
 
-	void BreakBlock(FVector WorldPosition, FVector HitNormal) const;
-	void PlaceBlock(FVector WorldPosition, FVector HitNormal) const;
-
-	void UpdateSurroundingChunkBlocks(FVector2D ChunkID, FVector Position) const;
+	void UpdateSurroundingChunkBlocks(FVector2D ChunkID, FVector Position, TMap<FVector2D, FMultiArray>* NoiseMap) const;
 	
 	~ABlockEditor();
 };

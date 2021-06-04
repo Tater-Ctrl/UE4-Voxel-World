@@ -33,7 +33,7 @@ int AChunk::CheckNeighbourChunk(int X, int Y, int Z, int IdX, int IdY)
 
 void AChunk::DrawChunk() 
 {
-	pm->CreateMeshSection_LinearColor(0, Cube->Vertices, Cube->Triangles, Cube->Normals, Cube->Uvs, VertexColors, Tangents, true);
+	//pm->CreateMeshSection_LinearColor(0, Cube->Vertices, Cube->Triangles, Cube->Normals, Cube->Uvs, VertexColors, Tangents, true);
 }
 
 void AChunk::UpdateChunkMesh()

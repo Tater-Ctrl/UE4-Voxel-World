@@ -7,49 +7,39 @@
 // Sets default values
 AChunkManager::AChunkManager()
 {
-	//Cube = new FCubeCreation();
-
-	// Colors for some reason?
-	VertexColors.Init(FLinearColor(0.0f,0.0f,0.0f,0.5), 256);
-
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root Component"));
 	SetRootComponent(RootComp);
 
-	RuntimeMeshComponent = CreateDefaultSubobject<URuntimeMeshComponentStatic>(TEXT("RuntimeMesh"));
-	RuntimeMeshComponent->SetupAttachment(RootComp);
-
-	RuntimeMeshComponent->CastShadow = false;
-
 	TextureAtlas = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Texture_Atlas/Atlas_M.Atlas_M"));
-
-	ChunkIndex = 0;
 }
 
-void AChunkManager::DrawChunk(FVector2D ChunkID) 
+void AChunkManager::DrawMesh(const FVector2D ChunkID) 
 {
-	ChunkSection.Emplace(ChunkID, ChunkIndex);
-
-	RuntimeMeshComponent->SetMaterial(ChunkIndex, TextureAtlas);
+	BuildMesh(ChunkID);
 	
-	RuntimeMeshComponent->CreateSectionFromComponents(0, ChunkIndex, 0,
-				Cube.Vertices, Cube.Triangles, Cube.Normals, Cube.Uvs, VertexColors, Tangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
-	++ChunkIndex;
-}
+	const int OffsetX = ChunkID.X * CHUNK_OFFSET;
+	const int OffsetY = ChunkID.Y * CHUNK_OFFSET;
 
-void AChunkManager::UpdateChunkMesh()
-{
-	//pm->ClearMeshSection(0);
-	//CreateChunk();
-}
+	AChunkMesh* NewMesh = GetWorld()->SpawnActor<AChunkMesh>(FVector(OffsetX, OffsetY, 0), FRotator(0, 0, 0));
+	ChunkMap.Add(ChunkID, NewMesh);
 
-void AChunkManager::CreateChunk(const FVector2D ChunkID)
-{	
+	ChunkMap[ChunkID]->SetMaterial(TextureAtlas);
+	ChunkMap[ChunkID]->CreateMesh(Cube.Vertices, Cube.Triangles, Cube.Normals, Cube.Uvs);
+
 	Cube.ClearMeshData();
+}
 
+void AChunkManager::UpdateMesh(FVector2D ChunkID)
+{
+	BuildMesh(ChunkID);
+
+	ChunkMap[ChunkID]->UpdateMesh(Cube.Vertices, Cube.Triangles, Cube.Normals, Cube.Uvs);
+	Cube.ClearMeshData();
+}
+
+void AChunkManager::BuildMesh(const FVector2D ChunkID)
+{
 	double Start = FPlatformTime::Seconds();
-
-	int OffsetX = ChunkID.X * CHUNK_WIDTH;
-	int OffsetY = ChunkID.Y * CHUNK_WIDTH;
 	
 	for(int X = 0; X < CHUNK_WIDTH; ++X)
 	{
@@ -64,90 +54,190 @@ void AChunkManager::CreateChunk(const FVector2D ChunkID)
 				// Draw top of block
 				if(NoiseMap[ChunkID].Get(X, Y, Z + 1) == BlockType::Air)
 				{
-					Cube.Top(X + OffsetX, Y + OffsetY, Z );
+					Cube.Top(X, Y, Z );
 				}
 
 				// Draw bottom of block
 				if(NoiseMap[ChunkID].Get(X, Y, Z - 1) == BlockType::Air)
 				{
-					Cube.Bottom(X + OffsetX, Y + OffsetY, Z);
+					Cube.Bottom(X, Y, Z);
 				}
 				
 				// Draw front of block and check neighbour chunks
-				if(NoiseMap[ChunkID].Get(X, Y + 1, Z) == BlockType::Air)
+				if(NoiseMap[ChunkID].Get(X, Y + 1, Z) <= BlockType::Air)
 				{
-					Cube.Front(X + OffsetX, Y + OffsetY, Z);
 					// Check neighbour chunk if it has a block or not
-					// if(NoiseMap->operator[](ChunkID).Get(X, Y + 1, Z) < BlockType::Air && NoiseMap->Find(FVector2D(ChunkID.X, ChunkID.Y + 1)))
-					// {
-					// 	// if neighbour block is Air, display tile face
-					// 	if(NoiseMap->operator[](FVector2D(ChunkID.X, ChunkID.Y + 1)).Get(X, 0, Z) == BlockType::Air)
-					// 	{
-					// 		Cube->Front(X, Y, Z);
-					// 	}
-					// } else
-					// {
-					// 	Cube->Front(X, Y, Z);
-					// }
+					if(NoiseMap[ChunkID].Get(X, Y + 1, Z) < BlockType::Air)
+					{
+						// if neighbour block is Air, display tile face
+						if(NoiseMap[FVector2D(ChunkID.X, ChunkID.Y + 1)].Get(X, 0, Z) == BlockType::Air)
+						{
+							Cube.Front(X, Y, Z);
+						}
+					} else
+					{
+						Cube.Front(X, Y, Z);
+					}
 				}
 
 				// Draw back of block  and check neighbour chunks
-				if(NoiseMap[ChunkID].Get(X, Y - 1, Z) == BlockType::Air)
+				if(NoiseMap[ChunkID].Get(X, Y - 1, Z) <= BlockType::Air)
 				{
-					Cube.Back(X + OffsetX, Y + OffsetY, Z);
 					// // Check neighbour chunk if it has a block or not
-					// if(NoiseMap->operator[](ChunkID).Get(X, Y - 1, Z) < BlockType::Air && NoiseMap->Find(FVector2D(ChunkID.X, ChunkID.Y - 1)))
-					// {
-					// 	// if neighbour chunk block is Air, display tile face
-					// 	if(NoiseMap->operator[](FVector2D(ChunkID.X, ChunkID.Y - 1)).Get(X, CHUNK_WIDTH - 1, Z) == BlockType::Air)
-					// 		Cube->Back(X, Y, Z);
-					// } else
-					// {
-					// 	Cube->Back(X, Y, Z);
-					// }
+					if(NoiseMap[ChunkID].Get(X, Y - 1, Z) < BlockType::Air)
+					{
+						// if neighbour chunk block is Air, display tile face
+						if(NoiseMap[FVector2D(ChunkID.X, ChunkID.Y - 1)].Get(X, CHUNK_WIDTH - 1, Z) == BlockType::Air)
+							Cube.Back(X, Y, Z);
+					} else
+					{
+						Cube.Back(X, Y, Z);
+					}
 				}
 				
 				// Draw left of block and check neighbour chunks
-				if(NoiseMap[ChunkID].Get(X + 1, Y, Z) == BlockType::Air)
+				if(NoiseMap[ChunkID].Get(X + 1, Y, Z) <= BlockType::Air)
 				{
-					Cube.Left(X + OffsetX, Y + OffsetY, Z);
 					// // Check neighbour chunk if it has a block or not
-					// if(NoiseMap->operator[](ChunkID).Get(X + 1, Y, Z) < BlockType::Air && NoiseMap->Find(FVector2D(ChunkID.X + 1, ChunkID.Y)))
-					// {
-					// 	// if neighbour chunk block is Air, display tile face
-					// 	if(NoiseMap->operator[](FVector2D(ChunkID.X + 1, ChunkID.Y)).Get(0, Y, Z) == BlockType::Air)
-					// 		Cube->Left(X, Y, Z);
-					// } else
-					// {
-					// 	Cube->Left(X, Y, Z);
-					// }
+					if(NoiseMap[ChunkID].Get(X + 1, Y, Z) < BlockType::Air)
+					{
+						// if neighbour chunk block is Air, display tile face
+						if(NoiseMap[FVector2D(ChunkID.X + 1, ChunkID.Y)].Get(0, Y, Z) == BlockType::Air)
+							Cube.Left(X, Y, Z);
+					} else
+					{
+						Cube.Left(X, Y, Z);
+					}
 				}
 				
 				// Draw right of block and check neighbour chunks
-				if(NoiseMap[ChunkID].Get(X - 1, Y, Z) == BlockType::Air)
+				if(NoiseMap[ChunkID].Get(X - 1, Y, Z) <= BlockType::Air)
 				{
-					Cube.Right(X + OffsetX, Y + OffsetY, Z);
 					// // Check neighbour chunk if it has a block or not
-					// if(NoiseMap->operator[](ChunkID).Get(X - 1, Y, Z) < BlockType::Air && NoiseMap->Find(FVector2D(ChunkID.X - 1, ChunkID.Y)))
-					// {
-					// 	// if neighbour chunk block is Air, display tile face
-					// 	if(NoiseMap->operator[](FVector2D(ChunkID.X - 1, ChunkID.Y)).Get(CHUNK_WIDTH - 1, Y, Z) == BlockType::Air)
-					// 		Cube->Right(X, Y, Z);
-					// } else
-					// {
-					// 	// if neighbour chunk block is Air, display tile face
-					// 	Cube->Right(X, Y, Z);
-					// }
+					if(NoiseMap[ChunkID].Get(X - 1, Y, Z) < BlockType::Air)
+					{
+						// if neighbour chunk block is Air, display tile face
+						if(NoiseMap[FVector2D(ChunkID.X - 1, ChunkID.Y)].Get(CHUNK_WIDTH - 1, Y, Z) == BlockType::Air)
+							Cube.Right(X, Y, Z);
+					} else
+					{
+						// if neighbour chunk block is Air, display tile face
+						Cube.Right(X, Y, Z);
+					}
 				}
 			}
 		}
 	}
-	
-	this->DrawChunk(ChunkID);
 
 	double End = FPlatformTime::Seconds();
 	
 	//UE_LOG(LogTemp, Warning, TEXT("%f ms"), (End-Start) * 1000);
+}
+
+void AChunkManager::BreakBlock(const FVector WorldPosition, const FVector HitNormal)
+{
+	const FVector2D ChunkID = FVector2D(floor(WorldPosition.X / CHUNK_OFFSET), floor(WorldPosition.Y / CHUNK_OFFSET));
+	
+	const FVector Position = FVector(floor(WorldPosition.X / BLOCK_SIZE - HitNormal.X / 2) - (ChunkID.X * CHUNK_WIDTH),
+										floor(WorldPosition.Y / BLOCK_SIZE - HitNormal.Y / 2) - (ChunkID.Y * CHUNK_WIDTH), 
+											floor(WorldPosition.Z / BLOCK_SIZE - HitNormal.Z / 2));
+	
+	if(NoiseMap.Find(ChunkID))
+	{
+		if(Position.Z == 0) return;
+		
+		if(NoiseMap[ChunkID].Get(Position) >= 0)
+		{
+			NoiseMap[ChunkID].Set(Position.X, Position.Y, Position.Z, 0);
+			UpdateSurroundingChunkBlocks(ChunkID, Position);
+			UpdateMesh(ChunkID);
+		} else
+		{
+			if(Position.X >= CHUNK_WIDTH)
+			{
+				NoiseMap[FVector2D(ChunkID.X + 1, ChunkID.Y)].Set(0, Position.Y, Position.Z, 0);
+				UpdateSurroundingChunkBlocks(ChunkID, Position);
+				UpdateMesh(FVector2D(ChunkID.X + 1, ChunkID.Y));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.X < 0)
+			{
+				NoiseMap[FVector2D(ChunkID.X - 1, ChunkID.Y)].Set(CHUNK_WIDTH - 1, Position.Y, Position.Z, 0);
+				UpdateSurroundingChunkBlocks(ChunkID, Position);
+				UpdateMesh(FVector2D(ChunkID.X - 1, ChunkID.Y));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.Y >= CHUNK_WIDTH)
+			{
+				NoiseMap[FVector2D(ChunkID.X, ChunkID.Y + 1)].Set(Position.X, 0, Position.Z, 0);
+				UpdateSurroundingChunkBlocks(ChunkID, Position);
+				UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y + 1));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.Y < 0)
+			{
+				NoiseMap[FVector2D(ChunkID.X, ChunkID.Y - 1)].Set(Position.X, CHUNK_WIDTH - 1, Position.Z, 0);
+				UpdateSurroundingChunkBlocks(ChunkID, Position);
+				UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y - 1));
+				UpdateMesh(ChunkID);
+			}
+		}
+	}
+}
+
+void AChunkManager::PlaceBlock(const FVector WorldPosition, const FVector HitNormal)
+{
+	// Get the Chunk which you are placing a block in
+	const FVector2D ChunkID = FVector2D(floor(WorldPosition.X / CHUNK_OFFSET), floor(WorldPosition.Y / CHUNK_OFFSET));
+
+	// Get the position where to place the new block
+	const FVector Position = FVector(floor(WorldPosition.X / BLOCK_SIZE + HitNormal.X / 2) - ChunkID.X * CHUNK_WIDTH,
+										floor(WorldPosition.Y / BLOCK_SIZE + HitNormal.Y / 2) - ChunkID.Y * CHUNK_WIDTH, 
+											floor(WorldPosition.Z / BLOCK_SIZE + HitNormal.Z / 2));
+	
+	if(NoiseMap.Find(ChunkID))
+	{
+		if(NoiseMap.operator[](ChunkID).Get(Position) >= 0)
+		{
+			NoiseMap[ChunkID].Set(Position.X, Position.Y, Position.Z, 1);
+			UpdateSurroundingChunkBlocks(ChunkID, Position);
+			UpdateMesh(ChunkID);
+		} else
+		{
+			if(Position.X >= CHUNK_WIDTH)
+			{
+				NoiseMap[FVector2D(ChunkID.X + 1, ChunkID.Y)].Set(0, Position.Y, Position.Z, 1);
+				UpdateMesh(FVector2D(ChunkID.X + 1, ChunkID.Y));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.X < 0)
+			{
+				NoiseMap[FVector2D(ChunkID.X - 1, ChunkID.Y)].Set(CHUNK_WIDTH - 1, Position.Y, Position.Z, 1);
+				UpdateMesh(FVector2D(ChunkID.X - 1, ChunkID.Y));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.Y >= CHUNK_WIDTH)
+			{
+				NoiseMap[FVector2D(ChunkID.X, ChunkID.Y + 1)].Set(Position.X, 0, Position.Z, 1);
+				UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y + 1));
+				UpdateMesh(ChunkID);
+			}
+			if(Position.Y < 0)
+			{
+				NoiseMap[FVector2D(ChunkID.X, ChunkID.Y - 1)].Set(Position.X, CHUNK_WIDTH - 1, Position.Z, 1);
+				UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y - 1));
+				UpdateMesh(ChunkID);
+			}
+		}
+	}
+}
+
+void AChunkManager::UpdateSurroundingChunkBlocks(const FVector2D ChunkID, const FVector Position)
+{
+	if(NoiseMap[ChunkID].Get(Position.X + 1, Position.Y, Position.Z) == -1) UpdateMesh(FVector2D(ChunkID.X + 1, ChunkID.Y));
+	if(NoiseMap[ChunkID].Get(Position.X - 1, Position.Y, Position.Z) == -1) UpdateMesh(FVector2D(ChunkID.X - 1, ChunkID.Y));
+	if(NoiseMap[ChunkID].Get(Position.X, Position.Y + 1, Position.Z) == -1) UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y + 1));
+	if(NoiseMap[ChunkID].Get(Position.X, Position.Y - 1, Position.Z) == -1) UpdateMesh(FVector2D(ChunkID.X, ChunkID.Y - 1));
 }
 
 void AChunkManager::SetBlockType(const int Sum)

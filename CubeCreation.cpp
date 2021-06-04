@@ -57,10 +57,10 @@ void FCubeCreation::AddTriangles()
 
 void FCubeCreation::AddUV(const int Value)
 {
-	Uvs.Add(FVector2D(uvScale * (Uvx + Value), uvScale * Uvy));
-	Uvs.Add(FVector2D(uvScale * (Uvx + Value), uvScale * Uvy - uvScale));
-	Uvs.Add(FVector2D(uvScale * (Uvx + Value) - uvScale, uvScale * Uvy - uvScale));
-	Uvs.Add(FVector2D(uvScale * (Uvx + Value) - uvScale, uvScale * Uvy));
+	Uvs.Add(FVector2D(UvScale * (Uvx + Value), UvScale * Uvy));
+	Uvs.Add(FVector2D(UvScale * (Uvx + Value), UvScale * Uvy - UvScale));
+	Uvs.Add(FVector2D(UvScale * (Uvx + Value) - UvScale, UvScale * Uvy - UvScale));
+	Uvs.Add(FVector2D(UvScale * (Uvx + Value) - UvScale, UvScale * Uvy));
 }
 
 void FCubeCreation::Top(const int X, const int Y, const int Z)
